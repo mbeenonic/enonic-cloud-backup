@@ -68,11 +68,11 @@ def command_execute(container_name, command):
 
 start_time = time.time()
 
-_info("Open log file")
 if os.path.isfile(log_file) != True:
     log = open(log_file, "w")
 else:
     log = open(log_file, "a")
+_info("Log file opened")
 log.write("[START] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
 
 _info("Check for command line arguments")
