@@ -73,7 +73,7 @@ if len(sys.argv) != 2:
 hostname = sys.argv[1]
 
 _info("")
-_info(" *** Performing remote backup on " + hostname + " ***", "yellow")
+_info(" *** Performing remote backup on " + hostname + " ***", "green")
 _info("")
 
 # check if argument is proper FQDN
@@ -110,10 +110,17 @@ if len(all_services) == 0:
     _exit()
 
 for dirname in all_services:
+    _info(" *** Processing " + dirname + " ***", "green")
+
     _info("Read yaml config")
     with open(dirname + "/docker-compose.yml", "r") as f:
         ecb_config = yaml.load(f)
-    _debug(yaml.dump(ecb_config))
+    out = yaml.dump(ecb_config)
+    _debug(out)
+
+    if 'ecb' in out.keys():
+        _info(dirname + " seems to be system container directory - skipping", "yellow")
+        continue
 
     _info("Find container types to be backed up")
     container_types_to_backup = {}
@@ -143,7 +150,7 @@ for dirname in all_services:
 
     for container_name in containers_to_backup.keys():
         _info("")
-        _info(" *** Staring backup of " + container_name + " ***", "yellow")
+        _info(" *** Staring backup of " + container_name + " ***", "green")
         _info("")
 
         _info(" * Run pre-scripts")
