@@ -5,7 +5,7 @@ MAINTAINER Marek Bettman <mbe@enonic.com>
 LABEL description="Enonic Cloud Backup container"
 
 RUN apt-get update && apt-get -y upgrade && apt-get -y install apt-transport-https
-RUN apt-get -y install htop mc git python-setuptools curl links wget python-pip && apt-get clean
+RUN apt-get -y install htop mc git python-setuptools curl links wget python-pip python-termcolor && apt-get clean
 
 RUN curl -sSL https://get.docker.com/ | sh
 

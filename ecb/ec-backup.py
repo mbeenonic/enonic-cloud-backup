@@ -2,7 +2,7 @@
 
 ### CONFIG ###
 log_file = "/backup/backup.log"
-DEBUG_MODE = False
+DEBUG_MODE = True
 ### END CONFIG ###
 
 import re
@@ -14,6 +14,7 @@ import os
 import shutil
 import docker
 import time
+from termcolor import cprint
 
 # register start time
 start_time = time.time()
@@ -34,7 +35,7 @@ def is_fqdn(hostname):
     return all(allowed.match(x) for x in hostname.split("."))
 
 def _error(message):
-    print("[ERROR] %s" % message)
+    cprint("[ERROR] %s" % message, "red")
     log.write("[ERROR] %s" % message + "\n")
 
 def _info(message):
@@ -43,7 +44,7 @@ def _info(message):
 
 def _debug(message):
     if DEBUG_MODE == True:
-        print("[DEBUG] %s" % message)
+        cprint("[DEBUG] %s" % message, "cyan")
 
 def _help():
     print("HELP - TBD")
