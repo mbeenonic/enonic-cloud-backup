@@ -1,0 +1,30 @@
+apache2:
+  build: apache2
+  hostname: superhero.tryme.enonic.io
+  restart: always
+  ports:
+    - "80:80"
+  links:
+    - exp
+  labels:
+    io.enonic.backup: "yes"
+    io.enonic.prescripts: command 1, command 2, command 3
+    io.enonic.postscripts: command 1, command 2, command 3
+
+exp:
+  build: exp
+  restart: always
+  ports:
+    - "8080:8080"
+  volumes_from:
+    - "storage"
+  labels:
+    io.enonic.backup: "yes"
+    io.enonic.prescripts: command 1, command 2, command 3
+    io.enonic.postscripts: command 1, command 2, command 3
+
+storage:
+  build: storage
+
+ecb:
+  build: ecb
