@@ -42,7 +42,7 @@ def _error(message):
         print("[ERROR] %s" % message)
     log.write("[ERROR] %s" % message + "\n")
 
-def _info(message, color=''):
+def _info(message, color='white'):
     if USE_COLORS == True:
         cprint("[INFO] %s" % message, color)
     else:
