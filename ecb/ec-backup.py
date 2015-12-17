@@ -1,10 +1,12 @@
 #!/usr/bin/python
 
 ### CONFIG ###
+
 log_file = "/backup/backup.log"
 DEBUG_MODE = False
 USE_COLORS = True
-### END CONFIG ###
+
+### IMPORTS ###
 
 import re
 import subprocess
@@ -17,15 +19,7 @@ import docker
 import time
 from termcolor import cprint
 
-# register start time
-start_time = time.time()
-
-# check if log file exists, create if not
-if os.path.isfile(log_file) != True:
-    log = open(log_file, "w")
-else:
-    log = open(log_file, "a")
-log.write("[START] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
+### FUNCTIONS ###
 
 def is_fqdn(hostname):
     if len(hostname) > 255:
@@ -70,6 +64,17 @@ def command_execute(container_name, command):
     exec_out = docker_client.exec_start(exec_id)
     _info(exec_out.strip(), "magenta")
 
+### MAIN ###
+
+start_time = time.time()
+
+_info("Open log file")
+if os.path.isfile(log_file) != True:
+    log = open(log_file, "w")
+else:
+    log = open(log_file, "a")
+log.write("[START] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
+
 _info("Check for command line arguments")
 if len(sys.argv) != 2:
     _error("Incorrect number of arguments: " + len(sys.argv))
@@ -78,16 +83,15 @@ if len(sys.argv) != 2:
 
 hostname = sys.argv[1]
 
-_info("")
-_info("*** Performing remote backup on " + hostname + " ***", "green")
-_info("")
-
-# check if argument is proper FQDN
 _info("Check if argument is proper FQDN")
 if is_fqdn(hostname) == False:
     _error("Hostname contains invalid characters.")
     _help()
     _exit(1)
+
+_info("")
+_info("*** Performing remote backup on " + hostname + " ***", "green")
+_info("")
 
 # clone git repo with host details
 #git_server = 'https://github.com/mbeenonic/'
@@ -170,9 +174,9 @@ for dirname in all_services:
         for command in containers_to_backup[container_name]['post-scripts']:
             command_execute(container_name, command)
 
-# register end time
 end_time = time.time()
 _info("")
 _info("Script was running for " + str(end_time - start_time) + " seconds")
+_info("")
 
 _exit()
