@@ -64,6 +64,12 @@ def _exit(exit_code=0):
     log.close()
     sys.exit(exit_code)
 
+def command_execute(container_name, command):
+    _info("Execute '" + command + "' command")
+    exec_id = docker_client.exec_create(container=container_name, cmd=command)
+    exec_out = docker_client.exec_start(exec_id)
+    _info(exec_out.strip(), "magenta")
+
 _info("Check for command line arguments")
 if len(sys.argv) != 2:
     _error("Incorrect number of arguments: " + len(sys.argv))
@@ -155,18 +161,14 @@ for dirname in all_services:
 
         _info("Run pre-scripts")
         for command in containers_to_backup[container_name]['pre-scripts']:
-            _info(" * Execute '" + command + "' command")
-            exec_id = docker_client.exec_create(container=container_name, cmd=command)
-            exec_out = docker_client.exec_start(exec_id)
-            _info(exec_out.strip(), "magenta")
+            command_execute(container_name, command)
 
         _info("Do backup")
         _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP',stdout=True,stderr=True,tty=True)")
 
         _info("Run post-scripts")
         for command in containers_to_backup[container_name]['post-scripts']:
-            _info(" * Execute '" + command + "' command")
-            _debug("docker.exec_create(container=" + container_name + ",cmd='" + command + "',stdout=True,stderr=True,tty=True)")
+            command_execute(container_name, command)
 
 # register end time
 end_time = time.time()
