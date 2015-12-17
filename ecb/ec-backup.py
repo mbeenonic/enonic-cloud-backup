@@ -42,8 +42,11 @@ def _error(message):
         print("[ERROR] %s" % message)
     log.write("[ERROR] %s" % message + "\n")
 
-def _info(message):
-    print("[INFO] %s" % message)
+def _info(message, color=''):
+    if USE_COLORS == True:
+        cprint("[INFO] %s" % message, color)
+    else:
+        print("[INFO] %s" % message)
     log.write("[INFO] %s" % message + "\n")
 
 def _debug(message):
@@ -61,18 +64,16 @@ def _exit(exit_code=0):
     log.close()
     sys.exit(exit_code)
 
-# check for amount of arguments
 _info("Check for command line arguments")
 if len(sys.argv) != 2:
     _error("Incorrect number of arguments: " + len(sys.argv))
     _help()
     _exit(1)
 
-# get hostname from command line arguments
 hostname = sys.argv[1]
 
 _info("")
-_info(" *** Performing remote backup on " + hostname + " ***")
+_info(" *** Performing remote backup on " + hostname + " ***", "yellow")
 _info("")
 
 # check if argument is proper FQDN
@@ -95,7 +96,6 @@ if is_fqdn(hostname) == False:
 #_info("Clone git repo for " + hostname)
 #git.Repo.clone_from(repo_address, repo_dirname)
 
-# get all directories under /services
 all_services = []
 _info("Search for service directories")
 for dir_name in os.listdir("/services"):
@@ -143,7 +143,7 @@ for dirname in all_services:
 
     for container_name in containers_to_backup.keys():
         _info("")
-        _info(" *** Staring backup of " + container_name + " ***")
+        _info(" *** Staring backup of " + container_name + " ***", "yellow")
         _info("")
 
         _info(" * Run pre-scripts")
