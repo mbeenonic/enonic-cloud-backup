@@ -156,7 +156,9 @@ for dirname in all_services:
         _info("Run pre-scripts")
         for command in containers_to_backup[container_name]['pre-scripts']:
             _info(" * Execute '" + command + "' command")
-            docker_client.exec_create(container=container_name, cmd=command)
+            exec_id = docker_client.exec_create(container=container_name, cmd=command)
+            exec_out = docker_client.exec_start(exec_id)
+            _debug(exec_out)
 
         _info("Do backup")
         _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP',stdout=True,stderr=True,tty=True)")
