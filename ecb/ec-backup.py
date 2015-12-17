@@ -2,6 +2,7 @@
 
 ### CONFIG ###
 log_file = "/backup/backup.log"
+DEBUG_MODE = False
 ### END CONFIG ###
 
 import re
@@ -41,7 +42,8 @@ def _info(message):
     log.write("[INFO] %s" % message + "\n")
 
 def _debug(message):
-    print("[DEBUG] %s" % message)
+    if DEBUG_MODE == True:
+        print("[DEBUG] %s" % message)
 
 def _help():
     print("HELP - TBD")
