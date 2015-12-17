@@ -2,7 +2,7 @@
 
 ### CONFIG ###
 log_file = "/backup/backup.log"
-DEBUG_MODE = True
+DEBUG_MODE = False
 USE_COLORS = True
 ### END CONFIG ###
 
@@ -158,7 +158,7 @@ for dirname in all_services:
             _info(" * Execute '" + command + "' command")
             exec_id = docker_client.exec_create(container=container_name, cmd=command)
             exec_out = docker_client.exec_start(exec_id)
-            _debug(exec_out)
+            _info(exec_out.strip(), "gray")
 
         _info("Do backup")
         _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP',stdout=True,stderr=True,tty=True)")
