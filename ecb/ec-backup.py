@@ -112,8 +112,6 @@ for dirname in all_services:
             post_scripts = [script.strip() for script in cmeta['labels']['io.enonic.postscripts'].split(",")]
             container_types_to_backup[ctype] = {'pre-scripts' : pre_scripts, 'post-scripts' : post_scripts}
     _info("Container types to backup: " + ', '.join(container_types_to_backup))
-    _debug(container_types_to_backup)
-    _exit()
 
     _info("Connecting to host docker demon")
     docker_client = docker.Client(base_url='unix://var/run/docker.sock', version="auto")
@@ -129,7 +127,6 @@ for dirname in all_services:
                 if p.match(container_name[1:]):
                     containers_to_backup[container_name[1:]] = container_types_to_backup[container_type]
     _info("Containers to backup: " + ", ".join(containers_to_backup.keys()))
-    #_debug(containers_to_backup)
 
     for container_name in containers_to_backup.keys():
         _info("")
@@ -139,7 +136,6 @@ for dirname in all_services:
         _info(" * Run pre-scripts")
         for command in containers_to_backup[container_name]['pre-scripts']:
             _debug("    docker.exec_create(container=" + container_name + ",cmd='" + command + "',stdout=True,stderr=True,tty=True)")
-            #_debug("Container: " + container_name + "     run command: '" + command + "'")
 
         _info(" * Do backup")
         _debug("    docker.exec_create(container=" + container_name + ",cmd='DO BACKUP',stdout=True,stderr=True,tty=True)")
