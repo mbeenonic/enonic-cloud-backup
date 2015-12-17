@@ -76,8 +76,8 @@ _info("Log file opened")
 log.write("[START] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
 
 _info("Check for command line arguments")
-if len(sys.argv) != 2:
-    _error("Incorrect number of arguments: " + len(sys.argv))
+if len(sys.argv) > 2:
+    _error("Incorrect number of arguments: " + len(sys.argv) + " - expected 0 or 1")
     _help()
     _exit(1)
 
@@ -149,7 +149,7 @@ for dirname in all_services:
     containers_to_backup = {}
     for image in docker_client.containers():
         for container_name in image['Names']:
-            docker_compose_prefix = hostname.replace('.', '')
+            docker_compose_prefix = dirname.split('/')[2].replace('.', '')
             for container_type in container_types_to_backup.keys():
                 re_string = '^' + docker_compose_prefix + '_' + container_type + '_[0-9]+$'
                 p = re.compile(re_string, re.IGNORECASE)
