@@ -3,6 +3,7 @@
 ### CONFIG ###
 log_file = "/backup/backup.log"
 DEBUG_MODE = True
+USE_COLORS = True
 ### END CONFIG ###
 
 import re
@@ -35,7 +36,10 @@ def is_fqdn(hostname):
     return all(allowed.match(x) for x in hostname.split("."))
 
 def _error(message):
-    cprint("[ERROR] %s" % message, "red")
+    if USE_COLORS == True:
+        cprint("[ERROR] %s" % message, "red")
+    else:
+        print("[ERROR] %s" % message)
     log.write("[ERROR] %s" % message + "\n")
 
 def _info(message):
@@ -44,7 +48,10 @@ def _info(message):
 
 def _debug(message):
     if DEBUG_MODE == True:
-        cprint("[DEBUG] %s" % message, "cyan")
+        if USE_COLORS == True:
+            cprint("[DEBUG] %s" % message, "cyan")
+        else:
+            print("[DEBUG] %s" % message)
 
 def _help():
     print("HELP - TBD")
@@ -96,6 +103,7 @@ for dir_name in os.listdir("/services"):
         continue
     all_services.append("/services/" + dir_name)
     _info("Found service directory: " + dir_name)
+_debug(all_services)
 
 if len(all_services) == 0:
     _info("No service directories containing docker-compose.yml found.")
@@ -105,7 +113,7 @@ for dirname in all_services:
     _info("Read yaml config")
     with open(dirname + "/docker-compose.yml", "r") as f:
         ecb_config = yaml.load(f)
-        #print(yaml.dump(ecb_config))
+    _debug(yaml.dump(ecb_config))
 
     _info("Find container types to be backed up")
     container_types_to_backup = {}
@@ -115,6 +123,7 @@ for dirname in all_services:
             post_scripts = [script.strip() for script in cmeta['labels']['io.enonic.postscripts'].split(",")]
             container_types_to_backup[ctype] = {'pre-scripts' : pre_scripts, 'post-scripts' : post_scripts}
     _info("Container types to backup: " + ', '.join(container_types_to_backup))
+    _debug(container_types_to_backup)
 
     _info("Connecting to host docker demon")
     docker_client = docker.Client(base_url='unix://var/run/docker.sock', version="auto")
@@ -130,6 +139,7 @@ for dirname in all_services:
                 if p.match(container_name[1:]):
                     containers_to_backup[container_name[1:]] = container_types_to_backup[container_type]
     _info("Containers to backup: " + ", ".join(containers_to_backup.keys()))
+    _debug(containers_to_backup)
 
     for container_name in containers_to_backup.keys():
         _info("")
