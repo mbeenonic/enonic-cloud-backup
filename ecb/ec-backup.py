@@ -116,9 +116,9 @@ for dirname in all_services:
     with open(dirname + "/docker-compose.yml", "r") as f:
         ecb_config = yaml.load(f)
     out = yaml.dump(ecb_config)
-    _debug(out)
+    _debug(ecb_config)
 
-    if 'ecb' in out.keys():
+    if 'ecb' in ecb_config.keys():
         _info(dirname + " seems to be system container directory - skipping", "yellow")
         continue
 
