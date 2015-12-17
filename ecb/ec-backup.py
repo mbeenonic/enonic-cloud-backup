@@ -73,7 +73,7 @@ if len(sys.argv) != 2:
 hostname = sys.argv[1]
 
 _info("")
-_info(" *** Performing remote backup on " + hostname + " ***", "green")
+_info("*** Performing remote backup on " + hostname + " ***", "green")
 _info("")
 
 # check if argument is proper FQDN
@@ -110,7 +110,7 @@ if len(all_services) == 0:
     _exit()
 
 for dirname in all_services:
-    _info(" *** Processing " + dirname + " ***", "green")
+    _info("*** Processing " + dirname + " ***", "green")
 
     _info("Read yaml config")
     with open(dirname + "/docker-compose.yml", "r") as f:
@@ -150,19 +150,21 @@ for dirname in all_services:
 
     for container_name in containers_to_backup.keys():
         _info("")
-        _info(" *** Staring backup of " + container_name + " ***", "green")
+        _info("*** Staring backup of " + container_name + " ***", "green")
         _info("")
 
-        _info(" * Run pre-scripts")
+        _info("Run pre-scripts")
         for command in containers_to_backup[container_name]['pre-scripts']:
-            _debug("    docker.exec_create(container=" + container_name + ",cmd='" + command + "',stdout=True,stderr=True,tty=True)")
+            _info(" * Execute '" + command + "' command")
+            _debug("docker.exec_create(container=" + container_name + ",cmd='" + command + "',stdout=True,stderr=True,tty=True)")
 
-        _info(" * Do backup")
-        _debug("    docker.exec_create(container=" + container_name + ",cmd='DO BACKUP',stdout=True,stderr=True,tty=True)")
+        _info("Do backup")
+        _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP',stdout=True,stderr=True,tty=True)")
 
-        _info(" * Run post-scripts")
+        _info("Run post-scripts")
         for command in containers_to_backup[container_name]['post-scripts']:
-            _debug("    docker.exec_create(container=" + container_name + ",cmd='" + command + "',stdout=True,stderr=True,tty=True)")
+            _info(" * Execute '" + command + "' command")
+            _debug("docker.exec_create(container=" + container_name + ",cmd='" + command + "',stdout=True,stderr=True,tty=True)")
 
 # register end time
 end_time = time.time()
