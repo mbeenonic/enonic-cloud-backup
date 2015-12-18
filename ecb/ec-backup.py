@@ -67,6 +67,7 @@ def _exit(exit_code=0):
 def command_execute(container_name, command):
     _info("Execute '" + command + "' command")
     exec_id = docker_client.exec_create(container=container_name, cmd=command)
+    _debug(command, True)
     _debug(docker_client.exec_inspect(exec_id), True)
     exec_out = docker_client.exec_start(exec_id)
     _debug(docker_client.exec_inspect(exec_id), True)
@@ -101,8 +102,8 @@ if is_fqdn(hostname) == False:
 
 _info("Connecting to host docker demon")
 docker_client = docker.Client(base_url='unix://var/run/docker.sock', version="auto")
-_debug(docker_client.version(), True)
-_debug(docker_client.info(), True)
+_debug(docker_client.version())
+_debug(docker_client.info())
 
 _info("")
 _info("*** Performing backup on " + hostname + " ***", "green")
