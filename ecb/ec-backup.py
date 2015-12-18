@@ -67,10 +67,11 @@ def _exit(exit_code=0):
 def command_execute(container_name, command):
     _info("Execute '" + command + "' command")
     exec_id = docker_client.exec_create(container=container_name, cmd=command)
-    _debug(command, True)
+    _debug(command)
     exec_out = docker_client.exec_start(exec_id)
-    _debug("Command exit code:" + str(docker_client.exec_inspect(exec_id)['ExitCode']), True)
-    _info(exec_out.strip(), "magenta")
+    _debug("Command exit code:" + str(docker_client.exec_inspect(exec_id)['ExitCode']))
+    out = { 'command_output': (exec_out.strip(), 'command_exit_code': docker_client.exec_inspect(exec_id)['ExitCode']}
+    return(out)
 
 ########
 # MAIN #
@@ -177,14 +178,18 @@ for dirname in all_services:
 
         _info("Run pre-scripts")
         for command in containers_to_backup[container_name]['pre-scripts']:
-            command_execute(container_name, command)
+            ret = command_execute(container_name, command)
+            _info(ret['command_output'], 'magenta')
+            _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
 
         _info("Do backup")
         _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP',stdout=True,stderr=True,tty=True)")
 
         _info("Run post-scripts")
         for command in containers_to_backup[container_name]['post-scripts']:
-            command_execute(container_name, command)
+            ret = command_execute(container_name, command)
+            _info(ret['command_output'], 'magenta')
+            _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
 
 end_time = time.time()
 _info("")
