@@ -70,7 +70,7 @@ def command_execute(container_name, command):
     _debug(command)
     exec_out = docker_client.exec_start(exec_id)
     _debug("Command exit code:" + str(docker_client.exec_inspect(exec_id)['ExitCode']))
-    out = { 'command_output': (exec_out.strip(), 'command_exit_code': docker_client.exec_inspect(exec_id)['ExitCode']}
+    out = { 'command_output': exec_out.strip(), 'command_exit_code': docker_client.exec_inspect(exec_id)['ExitCode']}
     return(out)
 
 ########
