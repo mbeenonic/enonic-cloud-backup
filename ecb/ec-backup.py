@@ -1,5 +1,20 @@
 #!/usr/bin/python
 
+###########
+# IMPORTS #
+###########
+
+import re
+
+import yaml
+import sys
+import os
+import docker
+import time
+from termcolor import cprint
+# import git    # for git
+# import shutil # for git
+
 ##########
 # CONFIG #
 ##########
@@ -7,62 +22,55 @@
 log_file = "/backup/backup.log"
 DEBUG_MODE = False
 USE_COLORS = True
-
-###########
-# IMPORTS #
-###########
-
-import re
-import subprocess
-import git
-import yaml
-import sys
-import os
-import shutil
-import docker
-import time
-from termcolor import cprint
+SU_PWD_SOURCE = '/srv/xp_su_pwd.txt'
 
 #############
 # FUNCTIONS #
 #############
+
 
 def is_fqdn(hostname):
     if len(hostname) > 255:
         return False
     if hostname[-1] == ".":
         hostname = hostname[:-1] # strip exactly one dot from the right, if present
-    allowed = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+    allowed = re.compile('(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
     return all(allowed.match(x) for x in hostname.split("."))
 
+
 def _error(message):
-    if USE_COLORS == True:
+    if USE_COLORS:
         cprint("[ERROR] %s" % message, "red")
     else:
         print("[ERROR] %s" % message)
     log.write("[ERROR] %s" % message + "\n")
 
+
 def _info(message, color='white'):
-    if USE_COLORS == True:
+    if USE_COLORS:
         cprint("[INFO] %s" % message, color)
     else:
         print("[INFO] %s" % message)
     log.write("[INFO] %s" % message + "\n")
 
+
 def _debug(message, force=False):
-    if DEBUG_MODE == True or force == True:
-        if USE_COLORS == True:
+    if DEBUG_MODE or force :
+        if USE_COLORS:
             cprint("[DEBUG] %s" % message, "cyan")
         else:
             print("[DEBUG] %s" % message)
 
+
 def _help():
     print("HELP - TBD")
+
 
 def _exit(exit_code=0):
     log.write("[END] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n\n")
     log.close()
     sys.exit(exit_code)
+
 
 def command_execute(container_name, command):
     _info("Execute '" + command + "' command")
@@ -79,7 +87,7 @@ def command_execute(container_name, command):
 
 start_time = time.time()
 
-if os.path.isfile(log_file) != True:
+if not os.path.isfile(log_file):
     log = open(log_file, "w")
 else:
     log = open(log_file, "a")
@@ -88,14 +96,14 @@ log.write("[START] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
 
 _info("Check for command line arguments")
 if len(sys.argv) > 2:
-    _error("Incorrect number of arguments: " + len(sys.argv) + " - expected 0 or 1")
+    _error("Incorrect number of arguments: " + str(len(sys.argv)) + " - expected 0 or 1")
     _help()
     _exit(1)
 
 hostname = sys.argv[1]
 
 _info("Check if argument is proper FQDN")
-if is_fqdn(hostname) == False:
+if not is_fqdn(hostname):
     _error("Hostname contains invalid characters.")
     _help()
     _exit(1)
@@ -110,22 +118,22 @@ _info("*** Performing backup on " + hostname + " ***", "green")
 _info("")
 
 # clone git repo with host details
-#git_server = 'https://github.com/mbeenonic/'
-#repo_name = 'io-' + hostname
-#repo_dirname = hostname + '.git'
-#repo_address = git_server + repo_name
+# git_server = 'https://github.com/mbeenonic/'
+# repo_name = 'io-' + hostname
+# repo_dirname = hostname + '.git'
+# repo_address = git_server + repo_name
 #
-#if os.path.exists(repo_dirname):
+# if os.path.exists(repo_dirname):
 #    _info("Found old version of " + hostname + " git repo - deleting")
 #    shutil.rmtree(repo_dirname)
 #
-#_info("Clone git repo for " + hostname)
-#git.Repo.clone_from(repo_address, repo_dirname)
+# _info("Clone git repo for " + hostname)
+# git.Repo.clone_from(repo_address, repo_dirname)
 
 all_services = []
 _info("Search for service directories")
 for dir_name in os.listdir("/services"):
-    if os.path.isfile("/services/" + dir_name + "/docker-compose.yml") != True:
+    if not os.path.isfile("/services/" + dir_name + "/docker-compose.yml"):
         continue
     all_services.append("/services/" + dir_name)
     _info("Found service directory: " + dir_name)
@@ -183,7 +191,7 @@ for dirname in all_services:
             _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
 
         _info("Do backup")
-        _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP',stdout=True,stderr=True,tty=True)")
+        _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP', stdout=True, stderr=True, tty=True)")
 
         _info("Run post-scripts")
         for command in containers_to_backup[container_name]['post-scripts']:
