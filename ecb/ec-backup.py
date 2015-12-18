@@ -5,7 +5,7 @@
 ##########
 
 log_file = "/backup/backup.log"
-DEBUG_MODE = True
+DEBUG_MODE = False
 USE_COLORS = True
 
 ###########
