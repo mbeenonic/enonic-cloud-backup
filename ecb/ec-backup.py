@@ -68,9 +68,8 @@ def command_execute(container_name, command):
     _info("Execute '" + command + "' command")
     exec_id = docker_client.exec_create(container=container_name, cmd=command)
     _debug(command, True)
-    _debug(docker_client.exec_inspect(exec_id), True)
     exec_out = docker_client.exec_start(exec_id)
-    _debug(docker_client.exec_inspect(exec_id), True)
+    _debug("Command exit code:" + docker_client.exec_inspect(exec_id)['ExitCode'], True)
     _info(exec_out.strip(), "magenta")
 
 ########
