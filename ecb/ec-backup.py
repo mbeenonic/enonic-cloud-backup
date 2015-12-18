@@ -1,12 +1,16 @@
 #!/usr/bin/python
 
-### CONFIG ###
+##########
+# CONFIG #
+##########
 
 log_file = "/backup/backup.log"
-DEBUG_MODE = False
+DEBUG_MODE = True
 USE_COLORS = True
 
-### IMPORTS ###
+###########
+# IMPORTS #
+###########
 
 import re
 import subprocess
@@ -19,7 +23,9 @@ import docker
 import time
 from termcolor import cprint
 
-### FUNCTIONS ###
+#############
+# FUNCTIONS #
+#############
 
 def is_fqdn(hostname):
     if len(hostname) > 255:
@@ -43,8 +49,8 @@ def _info(message, color='white'):
         print("[INFO] %s" % message)
     log.write("[INFO] %s" % message + "\n")
 
-def _debug(message):
-    if DEBUG_MODE == True:
+def _debug(message, force=False):
+    if DEBUG_MODE == True or force == True:
         if USE_COLORS == True:
             cprint("[DEBUG] %s" % message, "cyan")
         else:
@@ -64,7 +70,9 @@ def command_execute(container_name, command):
     exec_out = docker_client.exec_start(exec_id)
     _info(exec_out.strip(), "magenta")
 
-### MAIN ###
+########
+# MAIN #
+########
 
 start_time = time.time()
 
@@ -89,8 +97,13 @@ if is_fqdn(hostname) == False:
     _help()
     _exit(1)
 
+_info("Connecting to host docker demon")
+docker_client = docker.Client(base_url='unix://var/run/docker.sock', version="auto")
+_debug(docker_client.version(), True)
+_debug(docker_client.info(), True)
+
 _info("")
-_info("*** Performing remote backup on " + hostname + " ***", "green")
+_info("*** Performing backup on " + hostname + " ***", "green")
 _info("")
 
 # clone git repo with host details
@@ -141,9 +154,6 @@ for dirname in all_services:
             container_types_to_backup[ctype] = {'pre-scripts' : pre_scripts, 'post-scripts' : post_scripts}
     _info("Container types to backup: " + ', '.join(container_types_to_backup))
     _debug(container_types_to_backup)
-
-    _info("Connecting to host docker demon")
-    docker_client = docker.Client(base_url='unix://var/run/docker.sock', version="auto")
 
     _info("Get names of the containers to be backed up")
     containers_to_backup = {}
