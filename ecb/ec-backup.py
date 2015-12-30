@@ -155,7 +155,7 @@ for dirname in all_services:
         _info(dirname + " seems to be system container directory - skipping", "yellow")
         continue
 
-    _info("Find container types to be backed up")
+    _info("Find container types to be backed upXXX")
     container_types_to_backup = {}
     for ctype, cmeta in ecb_config.items():
         if 'labels' in cmeta.keys() and cmeta['labels']['io.enonic.backup'] == 'yes':
