@@ -159,10 +159,17 @@ for dirname in all_services:
     container_types_to_backup = {}
     for ctype, cmeta in ecb_config.items():
         if 'labels' in cmeta.keys() and cmeta['labels']['io.enonic.backup'] == 'yes':
-            if cmeta['labels']['io.enonic.prescripts'].string is not None:
+
+            if cmeta['labels']['io.enonic.prescripts'] is not None:
                 pre_scripts = [script.strip() for script in cmeta['labels']['io.enonic.prescripts'].split(",")]
-            if cmeta['labels']['io.enonic.postscripts'].string is not None:
+            else:
+                pre_scripts = ''
+
+            if cmeta['labels']['io.enonic.postscripts'] is not None:
                 post_scripts = [script.strip() for script in cmeta['labels']['io.enonic.postscripts'].split(",")]
+            else:
+                post_scripts = ''
+
             container_types_to_backup[ctype] = {'pre-scripts' : pre_scripts, 'post-scripts' : post_scripts}
     _info("Container types to backup: " + ', '.join(container_types_to_backup))
     _debug(container_types_to_backup)
