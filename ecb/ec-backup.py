@@ -160,12 +160,12 @@ for dirname in all_services:
     for ctype, cmeta in ecb_config.items():
         if 'labels' in cmeta.keys() and cmeta['labels']['io.enonic.backup'] == 'yes':
 
-            if cmeta['labels']['io.enonic.prescripts'].string is not None:
+            if cmeta['labels']['io.enonic.prescripts'] is not None:
                 pre_scripts = [script.strip() for script in cmeta['labels']['io.enonic.prescripts'].split(",")]
             else:
                 pre_scripts = ''
 
-            if cmeta['labels']['io.enonic.postscripts'].string is not None:
+            if cmeta['labels']['io.enonic.postscripts'] is not None:
                 post_scripts = [script.strip() for script in cmeta['labels']['io.enonic.postscripts'].split(",")]
             else:
                 post_scripts = ''
@@ -194,7 +194,7 @@ for dirname in all_services:
 
         _info("Run pre-scripts")
         for command in containers_to_backup[container_name]['pre-scripts']:
-            if containers_to_backup[container_name]['pre-scripts'].string is None:
+            if containers_to_backup[container_name]['pre-scripts'] is None:
                 _info("No pre-scripts defined")
             else:
                 ret = command_execute(container_name, command)
@@ -206,7 +206,7 @@ for dirname in all_services:
 
         _info("Run post-scripts")
         for command in containers_to_backup[container_name]['post-scripts']:
-            if containers_to_backup[container_name]['post-scripts'].string is None:
+            if containers_to_backup[container_name]['post-scripts'] is None:
                 _info("No post-scripts defined")
             else:
                 ret = command_execute(container_name, command)
