@@ -19,7 +19,7 @@ from termcolor import cprint
 ##########
 
 log_file = "/backup/backup.log"
-DEBUG_MODE = False
+DEBUG_MODE = True
 USE_COLORS = True
 SU_PWD_SOURCE = '/srv/xp_su_pwd.txt'
 
