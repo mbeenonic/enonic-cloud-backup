@@ -193,10 +193,10 @@ for dirname in all_services:
         _info("")
 
         _info("Run pre-scripts")
-        for command in containers_to_backup[container_name]['pre-scripts']:
-            if containers_to_backup[container_name]['pre-scripts'] is None:
-                _info("No pre-scripts defined")
-            else:
+        if containers_to_backup[container_name]['pre-scripts'] is None:
+            _info("No pre-scripts defined")
+        else:
+            for command in containers_to_backup[container_name]['pre-scripts']:
                 ret = command_execute(container_name, command)
                 _info(ret['command_output'], 'magenta')
                 _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
@@ -205,10 +205,10 @@ for dirname in all_services:
         _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP', stdout=True, stderr=True, tty=True)")
 
         _info("Run post-scripts")
-        for command in containers_to_backup[container_name]['post-scripts']:
-            if containers_to_backup[container_name]['post-scripts'] is None:
+        if containers_to_backup[container_name]['post-scripts'] is None:
                 _info("No post-scripts defined")
-            else:
+        else:
+            for command in containers_to_backup[container_name]['post-scripts']:
                 ret = command_execute(container_name, command)
                 _info(ret['command_output'], 'magenta')
                 _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
