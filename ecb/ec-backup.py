@@ -159,8 +159,10 @@ for dirname in all_services:
     container_types_to_backup = {}
     for ctype, cmeta in ecb_config.items():
         if 'labels' in cmeta.keys() and cmeta['labels']['io.enonic.backup'] == 'yes':
-            pre_scripts = [script.strip() for script in cmeta['labels']['io.enonic.prescripts'].split(",")]
-            post_scripts = [script.strip() for script in cmeta['labels']['io.enonic.postscripts'].split(",")]
+            if len(cmeta['labels']['io.enonic.prescripts']) > 0:
+                pre_scripts = [script.strip() for script in cmeta['labels']['io.enonic.prescripts'].split(",")]
+            if len(cmeta['labels']['io.enonic.postscripts']) > 0:
+                post_scripts = [script.strip() for script in cmeta['labels']['io.enonic.postscripts'].split(",")]
             container_types_to_backup[ctype] = {'pre-scripts' : pre_scripts, 'post-scripts' : post_scripts}
     _info("Container types to backup: " + ', '.join(container_types_to_backup))
     _debug(container_types_to_backup)
@@ -185,18 +187,24 @@ for dirname in all_services:
 
         _info("Run pre-scripts")
         for command in containers_to_backup[container_name]['pre-scripts']:
-            ret = command_execute(container_name, command)
-            _info(ret['command_output'], 'magenta')
-            _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
+            if len(containers_to_backup[container_name]['pre-scripts']) == 0:
+                _info("No pre-scripts defined")
+            else:
+                ret = command_execute(container_name, command)
+                _info(ret['command_output'], 'magenta')
+                _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
 
         _info("Do backup")
         _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP', stdout=True, stderr=True, tty=True)")
 
         _info("Run post-scripts")
         for command in containers_to_backup[container_name]['post-scripts']:
-            ret = command_execute(container_name, command)
-            _info(ret['command_output'], 'magenta')
-            _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
+            if len(containers_to_backup[container_name]['post-scripts']) == 0:
+                _info("No post-scripts defined")
+            else:
+                ret = command_execute(container_name, command)
+                _info(ret['command_output'], 'magenta')
+                _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
 
 end_time = time.time()
 _info("")
