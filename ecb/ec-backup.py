@@ -5,7 +5,6 @@
 ###########
 
 import re
-
 import yaml
 import sys
 import os
