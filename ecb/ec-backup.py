@@ -160,12 +160,12 @@ for dirname in all_services:
     for ctype, cmeta in ecb_config.items():
         if 'labels' in cmeta.keys() and cmeta['labels']['io.enonic.backup'] == 'yes':
 
-            if cmeta['labels']['io.enonic.prescripts'] is not None:
+            if cmeta['labels']['io.enonic.prescripts'].string is not None:
                 pre_scripts = [script.strip() for script in cmeta['labels']['io.enonic.prescripts'].split(",")]
             else:
                 pre_scripts = ''
 
-            if cmeta['labels']['io.enonic.postscripts'] is not None:
+            if cmeta['labels']['io.enonic.postscripts'].string is not None:
                 post_scripts = [script.strip() for script in cmeta['labels']['io.enonic.postscripts'].split(",")]
             else:
                 post_scripts = ''
