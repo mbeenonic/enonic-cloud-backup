@@ -206,7 +206,7 @@ for dirname in all_services:
 
         _info("Run post-scripts")
         if containers_to_backup[container_name]['post-scripts'] is None:
-                _info("No post-scripts defined")
+            _info("No post-scripts defined")
         else:
             for command in containers_to_backup[container_name]['post-scripts']:
                 ret = command_execute(container_name, command)
