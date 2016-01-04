@@ -84,7 +84,7 @@ def command_execute(container_name, command):
 
 LOG_FILE = "/backup/backup.log"
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 USE_COLORS = True
 
 BACKUP_FOLDER = '/services/_backup'
