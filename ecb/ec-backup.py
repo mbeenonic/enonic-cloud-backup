@@ -205,7 +205,7 @@ for dirname in all_services:
         _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP', stdout=True, stderr=True, tty=True)")
 
         _info("Run post-scripts")
-        if containers_to_backup[container_name]['post-scripts'] is None:
+        if containers_to_backup[container_name]['post-scripts'] == '':
             _info("No post-scripts defined")
         else:
             for command in containers_to_backup[container_name]['post-scripts']:
