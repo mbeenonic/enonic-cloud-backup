@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
+
 ###########
 # IMPORTS #
 ###########
+
 
 import re
 import yaml
@@ -14,29 +16,17 @@ from termcolor import cprint
 # import git    # for git
 # import shutil # for git
 
-##########
-# CONFIG #
-##########
-
-log_file = "/backup/backup.log"
-DEBUG_MODE = True
-USE_COLORS = True
-ADMIN_USER = 'su'
-ADMIN_PWD_FILE = '/services/xp_su_pwd.txt'
-
-with open(ADMIN_PWD_FILE, "r") as pwd_file:
-    data = pwd_file.readlines()
-    ADMIN_PASSWORD = data[0].replace('\n', '')
 
 #############
 # FUNCTIONS #
 #############
 
+
 def is_fqdn(hostname):
     if len(hostname) > 255:
         return False
     if hostname[-1] == ".":
-        hostname = hostname[:-1] # strip exactly one dot from the right, if present
+        hostname = hostname[:-1]  # strip exactly one dot from the right, if present
     allowed = re.compile('(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
     return all(allowed.match(x) for x in hostname.split("."))
 
@@ -58,7 +48,7 @@ def _info(message, color='white'):
 
 
 def _debug(message, force=False):
-    if DEBUG_MODE or force :
+    if DEBUG_MODE or force:
         if USE_COLORS:
             cprint("[DEBUG] %s" % message, "cyan")
         else:
@@ -84,9 +74,31 @@ def command_execute(container_name, command):
     out = { 'command_output': exec_out.strip(), 'command_exit_code': docker_client.exec_inspect(exec_id)['ExitCode']}
     return(out)
 
+
+##########
+# CONFIG #
+##########
+
+
+log_file = "/backup/backup.log"
+DEBUG_MODE = True
+USE_COLORS = True
+ADMIN_USER = 'su'
+ADMIN_PWD_FILE = "/services/xp_su_pwd.txt"
+
+if not os.path.isfile(ADMIN_PWD_FILE):
+    _error(ADMIN_PWD_FILE + " (ADMIN_PWD_FILE) does not exist")
+    _exit(1)
+else:
+    with open(ADMIN_PWD_FILE, "r") as pwd_file:
+        data = pwd_file.readlines()
+        ADMIN_PASSWORD = data[0].replace('\n', '')
+
+
 ########
 # MAIN #
 ########
+
 
 start_time = time.time()
 
@@ -202,9 +214,10 @@ for dirname in all_services:
         else:
             for command in containers_to_backup[container_name]['pre-scripts']:
                 if '$user$' in command:
-                    command.replace('$user$', ADMIN_USER)
+                    command = command.replace('$user$', ADMIN_USER)
                 if '$password$' in command:
-                    command.replace('$password$', ADMIN_PASSWORD)
+                    command = command.replace('$password$', ADMIN_PASSWORD)
+                _debug('Command to run: ' + command)
                 ret = command_execute(container_name, command)
                 _info(ret['command_output'], 'magenta')
                 _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
@@ -219,6 +232,11 @@ for dirname in all_services:
             _info(" * No post-scripts defined")
         else:
             for command in containers_to_backup[container_name]['post-scripts']:
+                if '$user$' in command:
+                    command = command.replace('$user$', ADMIN_USER)
+                if '$password$' in command:
+                    command = command.replace('$password$', ADMIN_PASSWORD)
+                _debug('Command to run: ' + command)
                 ret = command_execute(container_name, command)
                 _info(ret['command_output'], 'magenta')
                 _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
