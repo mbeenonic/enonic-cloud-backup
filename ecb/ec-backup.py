@@ -21,12 +21,16 @@ from termcolor import cprint
 log_file = "/backup/backup.log"
 DEBUG_MODE = True
 USE_COLORS = True
-SU_PWD_SOURCE = '/srv/xp_su_pwd.txt'
+ADMIN_USER = 'su'
+ADMIN_PWD_FILE = '/services/xp_su_pwd.txt'
+
+with open(ADMIN_PWD_FILE, "r") as pwd_file:
+    data = pwd_file.readlines()
+    ADMIN_PASSWORD = data[0].replace('\n', '')
 
 #############
 # FUNCTIONS #
 #############
-
 
 def is_fqdn(hostname):
     if len(hostname) > 255:
@@ -193,20 +197,26 @@ for dirname in all_services:
         _info("")
 
         _info("Run pre-scripts")
-        if containers_to_backup[container_name]['pre-scripts'] is None:
-            _info("No pre-scripts defined")
+        if containers_to_backup[container_name]['pre-scripts'] == '':
+            _info(" * No pre-scripts defined")
         else:
             for command in containers_to_backup[container_name]['pre-scripts']:
+                if '$user$' in command:
+                    command.replace('$user$', ADMIN_USER)
+                if '$password$' in command:
+                    command.replace('$password$', ADMIN_PASSWORD)
                 ret = command_execute(container_name, command)
                 _info(ret['command_output'], 'magenta')
                 _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
 
+        _info("")
         _info("Do backup")
         _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP', stdout=True, stderr=True, tty=True)")
 
+        _info("")
         _info("Run post-scripts")
         if containers_to_backup[container_name]['post-scripts'] == '':
-            _info("No post-scripts defined")
+            _info(" * No post-scripts defined")
         else:
             for command in containers_to_backup[container_name]['post-scripts']:
                 ret = command_execute(container_name, command)
