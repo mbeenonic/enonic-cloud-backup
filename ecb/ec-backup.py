@@ -225,8 +225,8 @@ for dirname in all_services:
                     command = command.replace('$password$', ADMIN_PASSWORD)
                 _debug('Command to run: ' + command)
                 ret = command_execute(container_name, command)
-                _info(ret['command_output'], 'magenta')
-                _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
+                _info(ret['command_output'])
+                _info("Command exit code: " + str(ret['command_exit_code']))
 
         _info("")
         _info("Do backup")
@@ -235,6 +235,7 @@ for dirname in all_services:
 
         tar_stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
         _debug(stats)
+        _debug(tar_stream)
 
         fobj = StringIO.StringIO(tar_stream)
 
