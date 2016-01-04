@@ -12,6 +12,8 @@ import sys
 import os
 import docker
 import time
+import tarfile
+import StringIO
 from termcolor import cprint
 # import git    # for git
 # import shutil # for git
@@ -228,13 +230,25 @@ for dirname in all_services:
 
         _info("")
         _info("Do backup")
+
         BACKUP_FILENAME = container_name + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
+
         tar_stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
         _debug(stats)
+
+        fobj = StringIO.StringIO(tar_stream)
+
         _info("Saving " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
-        backup_file = open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'w')
-        backup_file.write(tar_stream)
-        backup_file.close()
+        tar = tarfile.open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, "w:gz")
+        # backup_file = tarfile.TarFile(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'w:gz')
+
+        tarinfo = tarfile.TarInfo("foo.txt")
+        tarinfo.size = len(tar_stream)
+        tar.addfile(tarinfo, fobj)
+        tar.close()
+
+        if not os.path.isfile(BACKUP_FOLDER + '/' + BACKUP_FILENAME):
+            _error("Backup file does not exist: " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
 
         _info("")
         _info("Run post-scripts")
