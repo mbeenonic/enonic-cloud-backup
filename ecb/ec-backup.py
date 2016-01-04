@@ -80,9 +80,13 @@ def command_execute(container_name, command):
 ##########
 
 
-log_file = "/backup/backup.log"
-DEBUG_MODE = True
+LOG_FILE = "/backup/backup.log"
+
+DEBUG_MODE = False
 USE_COLORS = True
+
+BACKUP_FOLDER = '/services/_backup'
+
 ADMIN_USER = 'su'
 ADMIN_PWD_FILE = "/services/xp_su_pwd.txt"
 
@@ -102,10 +106,10 @@ else:
 
 start_time = time.time()
 
-if not os.path.isfile(log_file):
-    log = open(log_file, "w")
+if not os.path.isfile(LOG_FILE):
+    log = open(LOG_FILE, "w")
 else:
-    log = open(log_file, "a")
+    log = open(LOG_FILE, "a")
 _info("Log file opened")
 log.write("[START] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
 
@@ -224,7 +228,13 @@ for dirname in all_services:
 
         _info("")
         _info("Do backup")
-        _debug("docker.exec_create(container=" + container_name + ",cmd='DO BACKUP', stdout=True, stderr=True, tty=True)")
+        BACKUP_FILENAME = container_name + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
+        tar_stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
+        _debug(stats)
+        _info("Saving " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
+        backup_file = open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'w')
+        backup_file.write(tar_stream)
+        backup_file.close()
 
         _info("")
         _info("Run post-scripts")
