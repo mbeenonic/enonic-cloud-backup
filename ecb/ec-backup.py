@@ -231,7 +231,7 @@ for dirname in all_services:
         _info("")
         _info("Do backup")
 
-        BACKUP_FILENAME = container_name + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
+        BACKUP_FILENAME = container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
 
         tar_stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
         _debug(stats)
