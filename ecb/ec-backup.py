@@ -13,7 +13,6 @@ import os
 import docker
 import time
 import tarfile
-import StringIO
 from termcolor import cprint
 # import git    # for git
 # import shutil # for git
@@ -212,8 +211,9 @@ for dirname in all_services:
     for container_name in containers_to_backup.keys():
         _info("")
         _info("*** Staring backup of " + container_name + " ***", "green")
-        _info("")
 
+        # --- PRE-SCRIPTS ---
+        _info("")
         _info("Run pre-scripts")
         if containers_to_backup[container_name]['pre-scripts'] == '':
             _info(" * No pre-scripts defined")
@@ -226,12 +226,14 @@ for dirname in all_services:
                 _debug('Command to run: ' + command)
                 ret = command_execute(container_name, command)
                 _info(ret['command_output'])
-                _info("Command exit code: " + str(ret['command_exit_code']))
+                _debug("Command exit code: " + str(ret['command_exit_code']))
 
+        # --- BACKUP ---
         _info("")
         _info("Do backup")
 
-        BACKUP_FILENAME = container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
+        BACKUP_TIME = time.strftime("%Y-%m-%d_%H.%M.%S")
+        BACKUP_FILENAME = container_name + '_' + BACKUP_TIME + '.tar'
 
         stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar')
         _debug(stats)
@@ -241,19 +243,18 @@ for dirname in all_services:
         _info("Saving " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
 
         with open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'wb') as out:
-            #while True:
-            #    data = stream.data.read()
-            #    if data is None:
-            #        _debug("Stream data is empty")
-            #        break
-            #    # data = stream.data.read_chunnked()
             out.write(stream.data)
-
-        # stream.close()
 
         if not os.path.isfile(BACKUP_FOLDER + '/' + BACKUP_FILENAME):
             _error("Backup file does not exist: " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
 
+        # since file is copied as a tar stream, we need to extract actual tar.gz file with backup
+        tar = tarfile.open("BACKUP_FILENAME.tar")
+        # extract all to current dir
+        tar.extractall()
+        tar.close()
+
+        # --- POST-SCRIPTS ---
         _info("")
         _info("Run post-scripts")
         if containers_to_backup[container_name]['post-scripts'] == '':
