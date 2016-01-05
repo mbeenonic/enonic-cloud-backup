@@ -279,7 +279,7 @@ for dirname in all_services:
 
         _info("Write current file")
         with open(BACKUP_FOLDER + "/current", "w") as text_file:
-            text_file.write('/srv/_backup' + TAR_FILENAME + "\n")
+            text_file.write('/srv/_backup/' + TAR_FILENAME + "\n")
 
     ### POST-SCRIPTS ###
         _info("")
