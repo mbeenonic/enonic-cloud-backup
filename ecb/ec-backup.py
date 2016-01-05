@@ -236,14 +236,15 @@ for dirname in all_services:
         stream, stats = docker_client.get_archive(container_name, '/tmp/backup')
         _debug(stats)
         _debug(stream)
-        _debug(stream.__dict__)
+        _debug(stream.dir())
 
         _info("Saving " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
 
         with open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'wb') as out:
             while True:
-                data = stream.body.read(1024)
+                data = stream.data.read()
                 if data is None:
+                    _debug("Stream data is empty")
                     break
                 out.write(data)
 
