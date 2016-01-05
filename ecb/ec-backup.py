@@ -235,13 +235,22 @@ for dirname in all_services:
 
         stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
         _debug(stats)
-        _debug(tar_stream)
+        _debug(stream)
+        _debug(stream.data)
 
         _info("Saving " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
 
-        for chunk in stream:
-            print chunk
+        with open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'wb') as out:
+            while True:
+                data = stream.read(chunk_size)
+                if data is None:
+                    break
+                out.write(data)
 
+        stream.release_conn()
+        
+        _info("end")
+        
         _exit()
 
         if not os.path.isfile(BACKUP_FOLDER + '/' + BACKUP_FILENAME):
