@@ -278,7 +278,7 @@ for dirname in all_services:
 
         _info("Write current file")
         with open(BACKUP_FOLDER + "/current", "w") as text_file:
-            text_file.write(BACKUP_FILENAME)
+            text_file.write(BACKUP_FILENAME + "\n")
 
     ### POST-SCRIPTS ###
         _info("")
