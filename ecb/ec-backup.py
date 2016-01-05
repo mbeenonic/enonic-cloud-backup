@@ -236,7 +236,6 @@ for dirname in all_services:
         stream, stats = docker_client.get_archive(container_name, '/tmp/backup')
         _debug(stats)
         _debug(stream)
-        _debug(stream.dir())
 
         _info("Saving " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
 
