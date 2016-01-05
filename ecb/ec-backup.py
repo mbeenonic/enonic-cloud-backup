@@ -38,6 +38,7 @@ def _error(message):
     else:
         print("[ERROR] %s" % message)
     log.write("[ERROR] %s" % message + "\n")
+    sys.stdout.flush()
 
 
 def _info(message, color='white'):
@@ -46,6 +47,7 @@ def _info(message, color='white'):
     else:
         print("[INFO] %s" % message)
     log.write("[INFO] %s" % message + "\n")
+    sys.stdout.flush()
 
 
 def _debug(message, force=False):
@@ -54,6 +56,7 @@ def _debug(message, force=False):
             cprint("[DEBUG] %s" % message, "cyan")
         else:
             print("[DEBUG] %s" % message)
+    sys.stdout.flush()
 
 
 def _help():
@@ -251,7 +254,7 @@ for dirname in all_services:
         # since file is copied as a tar stream, we need to extract actual tar.gz file with backup
         tar = tarfile.open(BACKUP_FOLDER + '/' + BACKUP_FILENAME)
         # extract all to current dir
-        tar.extractall()
+        tar.extractall(path=BACKUP_FOLDER)
         tar.close()
 
         # --- POST-SCRIPTS ---
