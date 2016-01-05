@@ -258,8 +258,8 @@ for dirname in all_services:
         tar.close()
 
         # rename backup.tar.gz to BACKUP_FILENAME
-        _info("Rename " + TMP_FILENAME + " to " + BACKUP_FILENAME)
         BACKUP_FILENAME = BACKUP_FOLDER + '/' + container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
+        _info("Rename " + TMP_FILENAME + " to " + BACKUP_FILENAME)
         os.rename(TMP_FILENAME, BACKUP_FILENAME)
 
         size = os.path.getsize(BACKUP_FILENAME)
