@@ -258,7 +258,8 @@ for dirname in all_services:
         tar.close()
 
         # rename backup.tar.gz to BACKUP_FILENAME
-        BACKUP_FILENAME = BACKUP_FOLDER + '/' + container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
+        TAR_FILENAME = container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
+        BACKUP_FILENAME = BACKUP_FOLDER + '/' + TAR_FILENAME
         _info("Rename " + TMP_FILENAME + " to " + BACKUP_FILENAME)
         os.rename(BACKUP_FOLDER + '/backup.tar.gz', BACKUP_FILENAME)
 
@@ -278,7 +279,7 @@ for dirname in all_services:
 
         _info("Write current file")
         with open(BACKUP_FOLDER + "/current", "w") as text_file:
-            text_file.write(BACKUP_FILENAME + "\n")
+            text_file.write('/srv/_backup' + TAR_FILENAME + "\n")
 
     ### POST-SCRIPTS ###
         _info("")
