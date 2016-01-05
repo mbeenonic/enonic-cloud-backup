@@ -264,14 +264,14 @@ for dirname in all_services:
 
         size = os.path.getsize(BACKUP_FILENAME)
         if size >= 1048576:
-            size = float(size / 1048576)
+            size = float(size) / 1048576
             unit = 'MB'
         elif size >= 1024:
-            size = float(size / 1024)
+            size = float(size) / 1024
             unit = 'KB'
         else:
             unit = 'B'
-        _info(BACKUP_FILENAME + " saved: " + str(size) + ' ' + unit)
+        _info(BACKUP_FILENAME + " saved: " + ("%.2f" % size) + ' ' + unit)
 
     ### POST-SCRIPTS ###
         _info("")
