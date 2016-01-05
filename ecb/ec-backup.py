@@ -241,13 +241,13 @@ for dirname in all_services:
         _info("Saving " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
 
         with open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'wb') as out:
-            while True:
-                data = stream.data.read()
-                if data is None:
-                    _debug("Stream data is empty")
-                    break
-                # data = stream.data.read_chunnked()
-                out.write(data)
+            #while True:
+            #    data = stream.data.read()
+            #    if data is None:
+            #        _debug("Stream data is empty")
+            #        break
+            #    # data = stream.data.read_chunnked()
+            out.write(stream.data)
 
         # stream.close()
 
