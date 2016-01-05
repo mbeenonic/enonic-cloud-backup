@@ -233,7 +233,7 @@ for dirname in all_services:
 
         BACKUP_FILENAME = container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
 
-        stream, stats = docker_client.get_archive(container_name, '/tmp/backup')
+        stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar')
         _debug(stats)
         _debug(stream)
         _debug(stream.getheaders())
@@ -241,15 +241,15 @@ for dirname in all_services:
         _info("Saving " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
 
         with open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'wb') as out:
-            #while True:
-            #    data = stream.data.read()
-            #    if data is None:
-            #        _debug("Stream data is empty")
-            #        break
-            data = stream.data.read_chunnked()
-            out.write(data)
+            while True:
+                data = stream.data.read()
+                if data is None:
+                    _debug("Stream data is empty")
+                    break
+                # data = stream.data.read_chunnked()
+                out.write(data)
 
-        stream.close()
+        # stream.close()
 
         if not os.path.isfile(BACKUP_FOLDER + '/' + BACKUP_FILENAME):
             _error("Backup file does not exist: " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
