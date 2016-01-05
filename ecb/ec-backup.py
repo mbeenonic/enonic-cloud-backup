@@ -177,7 +177,7 @@ for dirname in all_services:
         _info(dirname + " seems to be system container directory - skipping", "yellow")
         continue
 
-    _info("Find container types to be backed upXXX")
+    _info("Find container types to be backed up")
     container_types_to_backup = {}
     for ctype, cmeta in ecb_config.items():
         if 'labels' in cmeta.keys() and cmeta['labels']['io.enonic.backup'] == 'yes':
@@ -233,7 +233,7 @@ for dirname in all_services:
 
         BACKUP_FILENAME = container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
 
-        stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
+        stream, stats = docker_client.get_archive(container_name, '/tmp/backup')
         _debug(stats)
         _debug(stream)
 
@@ -241,12 +241,10 @@ for dirname in all_services:
 
         with open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'wb') as out:
             while True:
-                data = stream.read(512)
+                data = stream.read(len(stream))
                 if data is None:
                     break
                 out.write(data)
-
-        stream.release_conn()
 
         if not os.path.isfile(BACKUP_FOLDER + '/' + BACKUP_FILENAME):
             _error("Backup file does not exist: " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
