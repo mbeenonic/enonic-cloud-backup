@@ -235,7 +235,7 @@ for dirname in all_services:
         BACKUP_TIME = time.strftime("%Y-%m-%d_%H.%M.%S")
         BACKUP_FILENAME = container_name + '_' + BACKUP_TIME + '.tar'
 
-        stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar')
+        stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
         _debug(stats)
         _debug(stream)
         _debug(stream.getheaders())
