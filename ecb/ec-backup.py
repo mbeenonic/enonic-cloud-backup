@@ -86,7 +86,7 @@ def command_execute(container_name, command):
 
 LOG_FILE = "/backup/backup.log"
 
-DEBUG_MODE = True
+DEBUG_MODE = FALSE
 USE_COLORS = True
 
 BACKUP_FOLDER = '/services/_backup'
@@ -215,7 +215,7 @@ for dirname in all_services:
         _info("")
         _info("*** Staring backup of " + container_name + " ***", "green")
 
-        # --- PRE-SCRIPTS ---
+    ### PRE-SCRIPTS ###
         _info("")
         _info("Run pre-scripts")
         if containers_to_backup[container_name]['pre-scripts'] == '':
@@ -228,36 +228,52 @@ for dirname in all_services:
                     command = command.replace('$password$', ADMIN_PASSWORD)
                 _debug('Command to run: ' + command)
                 ret = command_execute(container_name, command)
-                _info(ret['command_output'])
+                _info("command output:\n" + ret['command_output'], 'yellow')
                 _debug("Command exit code: " + str(ret['command_exit_code']))
 
-        # --- BACKUP ---
+    ### BACKUP ###
         _info("")
         _info("Do backup")
-
-        BACKUP_TIME = time.strftime("%Y-%m-%d_%H.%M.%S")
-        BACKUP_FILENAME = container_name + '_' + BACKUP_TIME + '.tar'
 
         stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
         _debug(stats)
         _debug(stream)
         _debug(stream.getheaders())
 
-        _info("Saving " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
+        TMP_FILENAME = BACKUP_FOLDER + '/tmp.tar'
 
-        with open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'wb') as out:
+        _info("Saving " + TMP_FILENAME)
+
+        with open(TMP_FILENAME, 'wb') as out:
             out.write(stream.data)
 
-        if not os.path.isfile(BACKUP_FOLDER + '/' + BACKUP_FILENAME):
-            _error("Backup file does not exist: " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
+        if not os.path.isfile(TMP_FILENAME):
+            _error("Backup file does not exist: " + TMP_FILENAME)
 
         # since file is copied as a tar stream, we need to extract actual tar.gz file with backup
-        tar = tarfile.open(BACKUP_FOLDER + '/' + BACKUP_FILENAME)
+        _info("Extracting backup archive from " + TMP_FILENAME)
+        tar = tarfile.open(TMP_FILENAME)
         # extract all to current dir
         tar.extractall(path=BACKUP_FOLDER)
         tar.close()
 
-        # --- POST-SCRIPTS ---
+        # rename backup.tar.gz to BACKUP_FILENAME
+        _info("Rename " + TMP_FILENAME + " to " + BACKUP_FILENAME)
+        BACKUP_FILENAME = BACKUP_FOLDER + '/' + container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
+        os.rename(TMP_FILENAME, BACKUP_FILENAME)
+
+        size = os.path.getsize(BACKUP_FILENAME)
+        if size >= 1024:
+            size = size / 1024
+            unit = 'KB'
+        elif size >= 1024000:
+            size = size / 1024000
+            unit = 'MB'
+        else:
+            unit = 'B'
+        _info(BACKUP_FILENAME + " saved: " + str(size) + ' ' + unit)
+
+    ### POST-SCRIPTS ###
         _info("")
         _info("Run post-scripts")
         if containers_to_backup[container_name]['post-scripts'] == '':
