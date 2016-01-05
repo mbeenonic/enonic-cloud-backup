@@ -276,6 +276,10 @@ for dirname in all_services:
         _info("Cleanup - remove " + TMP_FILENAME)
         os.remove(TMP_FILENAME)
 
+        _info("Write current file")
+        with open(BACKUP_FOLDER + "/current", "w") as text_file:
+            text_file.write(BACKUP_FILENAME)
+
     ### POST-SCRIPTS ###
         _info("")
         _info("Run post-scripts")
