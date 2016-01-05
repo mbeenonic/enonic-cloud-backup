@@ -273,6 +273,9 @@ for dirname in all_services:
             unit = 'B'
         _info(BACKUP_FILENAME + " saved: " + ("%.2f" % size) + ' ' + unit)
 
+        _info("Cleanup - remove " + TMP_FILENAME)
+        os.remove(TMP_FILENAME)
+
     ### POST-SCRIPTS ###
         _info("")
         _info("Run post-scripts")
@@ -291,7 +294,7 @@ for dirname in all_services:
 
 end_time = time.time()
 _info("")
-_info("Script was running for " + str(end_time - start_time) + " seconds")
+_info("Script was running for " + str(int(end_time - start_time)) + " seconds")
 _info("")
 
 _exit()
