@@ -249,7 +249,7 @@ for dirname in all_services:
             _error("Backup file does not exist: " + BACKUP_FOLDER + '/' + BACKUP_FILENAME)
 
         # since file is copied as a tar stream, we need to extract actual tar.gz file with backup
-        tar = tarfile.open(BACKUP_FILENAME)
+        tar = tarfile.open(BACKUP_FOLDER + '/' + BACKUP_FILENAME)
         # extract all to current dir
         tar.extractall()
         tar.close()
