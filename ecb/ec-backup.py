@@ -241,7 +241,7 @@ for dirname in all_services:
 
         with open(BACKUP_FOLDER + '/' + BACKUP_FILENAME, 'wb') as out:
             while True:
-                data = stream.read(stats['size'])
+                data = stream.data.read(1024)
                 if data is None:
                     break
                 out.write(data)
