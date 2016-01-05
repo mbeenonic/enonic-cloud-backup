@@ -176,7 +176,7 @@ for dirname in all_services:
     _debug(ecb_config)
 
     if 'ecb' in ecb_config.keys():
-        _info(dirname + " seems to be system container directory - skipping", "yellow")
+        _info(dirname + " seems to be system container directory - skipping")
         continue
 
     _info("Find container types to be backed up")
@@ -219,7 +219,7 @@ for dirname in all_services:
         _info("")
         _info("Run pre-scripts")
         if containers_to_backup[container_name]['pre-scripts'] == '':
-            _info(" * No pre-scripts defined")
+            _info("No pre-scripts defined")
         else:
             for command in containers_to_backup[container_name]['pre-scripts']:
                 if '$user$' in command:
@@ -260,15 +260,15 @@ for dirname in all_services:
         # rename backup.tar.gz to BACKUP_FILENAME
         BACKUP_FILENAME = BACKUP_FOLDER + '/' + container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
         _info("Rename " + TMP_FILENAME + " to " + BACKUP_FILENAME)
-        os.rename(TMP_FILENAME, BACKUP_FILENAME)
+        os.rename(BACKUP_FOLDER + '/backup.tar.gz', BACKUP_FILENAME)
 
         size = os.path.getsize(BACKUP_FILENAME)
-        if size >= 1024:
-            size = size / 1024
-            unit = 'KB'
-        elif size >= 1024000:
-            size = size / 1024000
+        if size >= 1048576:
+            size = float(size / 1048576)
             unit = 'MB'
+        elif size >= 1024:
+            size = float(size / 1024)
+            unit = 'KB'
         else:
             unit = 'B'
         _info(BACKUP_FILENAME + " saved: " + str(size) + ' ' + unit)
@@ -277,7 +277,7 @@ for dirname in all_services:
         _info("")
         _info("Run post-scripts")
         if containers_to_backup[container_name]['post-scripts'] == '':
-            _info(" * No post-scripts defined")
+            _info("No post-scripts defined")
         else:
             for command in containers_to_backup[container_name]['post-scripts']:
                 if '$user$' in command:
