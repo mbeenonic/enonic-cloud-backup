@@ -125,7 +125,7 @@ log.write("[START] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
 _info("Check for command line arguments")
 if len(sys.argv) > 2:
     _error("Incorrect number of arguments: " + str(len(sys.argv)) + " - expected 0 or 1")
-     _exit(1)
+    _exit(1)
 
 # get hostname on which backup should be run - will be hostname or localhost
 hostname = sys.argv[1]
