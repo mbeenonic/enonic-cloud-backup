@@ -18,12 +18,29 @@ from termcolor import cprint
 # import shutil # for git
 
 
+##########
+# CONFIG #
+##########
+
+
+LOG_FILE = "/backup/backup.log"
+
+DEBUG_MODE = False
+USE_COLORS = True
+
+BACKUP_FOLDER = '/services/_backup'
+
+ADMIN_USER = 'su'
+ADMIN_PWD_FILE = "/services/xp_su_pwd.txt"
+
+
 #############
 # FUNCTIONS #
 #############
 
 
 def is_fqdn(hostname):
+    # ok, not exactly FQDN check - just checking if there are no illegal characters in hostname
     if len(hostname) > 255:
         return False
     if hostname[-1] == ".":
@@ -59,10 +76,6 @@ def _debug(message, force=False):
     sys.stdout.flush()
 
 
-def _help():
-    print("HELP - TBD")
-
-
 def _exit(exit_code=0):
     log.write("[END] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n\n")
     log.close()
@@ -70,6 +83,10 @@ def _exit(exit_code=0):
 
 
 def command_execute(container_name, command):
+    # this is slightly retarded way of doing docker exec:
+    # first you prepare exec 'session' with docker_client.exec_create()
+    # then execute it with docker_client.exec_start(id) (id is returned from exec_create())
+    # finally do docker_client.exec_inspect() to learn if it actually succeeded
     _info("Execute '" + command + "' command")
     exec_id = docker_client.exec_create(container=container_name, cmd=command)
     _debug(command)
@@ -79,21 +96,15 @@ def command_execute(container_name, command):
     return(out)
 
 
-##########
-# CONFIG #
-##########
+########
+# MAIN #
+########
 
 
-LOG_FILE = "/backup/backup.log"
+start_time = time.time()
 
-DEBUG_MODE = False
-USE_COLORS = True
-
-BACKUP_FOLDER = '/services/_backup'
-
-ADMIN_USER = 'su'
-ADMIN_PWD_FILE = "/services/xp_su_pwd.txt"
-
+# get XP 'su' user password from password file:
+# usually /services/xp_su_pwd.txt (within the container), or /srv/xp_su_pwd.txt on the parent host
 if not os.path.isfile(ADMIN_PWD_FILE):
     _error(ADMIN_PWD_FILE + " (ADMIN_PWD_FILE) does not exist")
     _exit(1)
@@ -102,14 +113,7 @@ else:
         data = pwd_file.readlines()
         ADMIN_PASSWORD = data[0].replace('\n', '')
 
-
-########
-# MAIN #
-########
-
-
-start_time = time.time()
-
+# open or create log file
 if not os.path.isfile(LOG_FILE):
     log = open(LOG_FILE, "w")
 else:
@@ -117,55 +121,50 @@ else:
 _info("Log file opened")
 log.write("[START] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
 
+# expecting only one option - hostname, exit if more
 _info("Check for command line arguments")
 if len(sys.argv) > 2:
     _error("Incorrect number of arguments: " + str(len(sys.argv)) + " - expected 0 or 1")
-    _help()
-    _exit(1)
+     _exit(1)
 
+# get hostname on which backup should be run - will be hostname or localhost
 hostname = sys.argv[1]
 
+# not exactly FQDN check - just check ift here are no illegal characters in hostname
 _info("Check if hostname contains any illegal characters")
 if not is_fqdn(hostname):
     _error("Hostname contains invalid characters.")
-    _help()
     _exit(1)
 
+# since we are running from ECB container, we'll be connecting to docker daemon on parent host through unix socket
 _info("Connecting to host docker demon")
 docker_client = docker.Client(base_url='unix://var/run/docker.sock', version="auto")
 _debug(docker_client.version())
 _debug(docker_client.info())
 
+# let's go
 _info("")
 _info("*** Performing backup on " + hostname + " ***", "green")
 _info("")
 
-# clone git repo with host details
-# git_server = 'https://github.com/mbeenonic/'
-# repo_name = 'io-' + hostname
-# repo_dirname = hostname + '.git'
-# repo_address = git_server + repo_name
-#
-# if os.path.exists(repo_dirname):
-#    _info("Found old version of " + hostname + " git repo - deleting")
-#    shutil.rmtree(repo_dirname)
-#
-# _info("Clone git repo for " + hostname)
-# git.Repo.clone_from(repo_address, repo_dirname)
-
+# service is a XP installation, and to be exact a directory with
+# docker-compose.yaml file in it
 all_services = []
 _info("Search for service directories")
 for dir_name in os.listdir("/services"):
+    # skip if there is no docker-compose.yaml
     if not os.path.isfile("/services/" + dir_name + "/docker-compose.yml"):
         continue
     all_services.append("/services/" + dir_name)
     _info("Found service directory: " + dir_name)
 _debug(all_services)
 
+# 404 :(
 if len(all_services) == 0:
     _info("No service directories containing docker-compose.yml found.")
     _exit()
 
+# ok, let's find actual containers we want to backup for each service
 for dirname in all_services:
     _info("*** Processing " + dirname + " ***", "green")
 
@@ -175,29 +174,37 @@ for dirname in all_services:
     out = yaml.dump(ecb_config)
     _debug(ecb_config)
 
+    # 'ecb' is the name of backup container - skip
     if 'ecb' in ecb_config.keys():
         _info(dirname + " seems to be system container directory - skipping")
         continue
 
+    # We're finding container types first, since that is how it is defined in yaml file
+    # Container type -> post/pre scripts
+    # and the you might have more than one container of given type, each with unique name
     _info("Find container types to be backed up")
     container_types_to_backup = {}
     for ctype, cmeta in ecb_config.items():
         if 'labels' in cmeta.keys() and cmeta['labels']['io.enonic.backup'] == 'yes':
 
+            # get prescripts
             if cmeta['labels']['io.enonic.prescripts'] is not None:
                 pre_scripts = [script.strip() for script in cmeta['labels']['io.enonic.prescripts'].split(",")]
             else:
                 pre_scripts = ''
 
+            # get postscripts
             if cmeta['labels']['io.enonic.postscripts'] is not None:
                 post_scripts = [script.strip() for script in cmeta['labels']['io.enonic.postscripts'].split(",")]
             else:
                 post_scripts = ''
 
+            # types to backup (in most cases only exp probably)
             container_types_to_backup[ctype] = {'pre-scripts' : pre_scripts, 'post-scripts' : post_scripts}
     _info("Container types to backup: " + ', '.join(container_types_to_backup))
     _debug(container_types_to_backup)
 
+    # now, get the actual names of the containers of each type
     _info("Get names of the containers to be backed up")
     containers_to_backup = {}
     for image in docker_client.containers():
@@ -208,22 +215,26 @@ for dirname in all_services:
                 p = re.compile(re_string, re.IGNORECASE)
                 if p.match(container_name[1:]):
                     containers_to_backup[container_name[1:]] = container_types_to_backup[container_type]
+    # ... aaad we've got list of containers
     _info("Containers to backup: " + ", ".join(containers_to_backup.keys()))
     _debug(containers_to_backup)
 
+    # backup each container
     for container_name in containers_to_backup.keys():
         _info("")
         _info("*** Staring backup of " + container_name + " ***", "green")
 
-    ### PRE-SCRIPTS ###
+        # PRE-SCRIPTS
         _info("")
         _info("Run pre-scripts")
         if containers_to_backup[container_name]['pre-scripts'] == '':
             _info("No pre-scripts defined")
         else:
             for command in containers_to_backup[container_name]['pre-scripts']:
+                # if there is '$user$' string in the docker-compose.yaml it will be replaced with admin user for XP
                 if '$user$' in command:
                     command = command.replace('$user$', ADMIN_USER)
+                # if there is '$password$' string in the docker-compose.yaml it will be replaced with admin user for XP
                 if '$password$' in command:
                     command = command.replace('$password$', ADMIN_PASSWORD)
                 _debug('Command to run: ' + command)
@@ -231,15 +242,18 @@ for dirname in all_services:
                 _info("command output:\n" + ret['command_output'], 'yellow')
                 _debug("Command exit code: " + str(ret['command_exit_code']))
 
-    ### BACKUP ###
+        # BACKUP
         _info("")
         _info("Do backup")
 
+        # pre-scripts prepared /tmp/backup.tar.gz, now we want to download it from target container to ecb container
         stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
         _debug(stats)
         _debug(stream)
         _debug(stream.getheaders())
 
+        # now, this is slightly weird part:
+        # docker_client.get_archive() is downloading target and taring it, so tmp.tar will have backup.tar.gz inside... 
         TMP_FILENAME = BACKUP_FOLDER + '/tmp.tar'
 
         _info("Saving " + TMP_FILENAME)
@@ -250,7 +264,7 @@ for dirname in all_services:
         if not os.path.isfile(TMP_FILENAME):
             _error("Backup file does not exist: " + TMP_FILENAME)
 
-        # since file is copied as a tar stream, we need to extract actual tar.gz file with backup
+        # since file is copied as a tar stream, we need to extract actual backup.tar.gz file with backup
         _info("Extracting backup archive from " + TMP_FILENAME)
         tar = tarfile.open(TMP_FILENAME)
         # extract all to current dir
@@ -274,14 +288,16 @@ for dirname in all_services:
             unit = 'B'
         _info(BACKUP_FILENAME + " saved: " + ("%.2f" % size) + ' ' + unit)
 
+        # cleanup
         _info("Cleanup - remove " + TMP_FILENAME)
         os.remove(TMP_FILENAME)
 
+        # this is to notify ec-backup.sh which file is the newest (for info and download purposes)
         _info("Write current file")
         with open(BACKUP_FOLDER + "/current", "w") as text_file:
             text_file.write('/srv/_backup/' + TAR_FILENAME + "\n")
 
-    ### POST-SCRIPTS ###
+        # POST-SCRIPTS
         _info("")
         _info("Run post-scripts")
         if containers_to_backup[container_name]['post-scripts'] == '':
