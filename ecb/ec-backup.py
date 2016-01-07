@@ -125,7 +125,7 @@ if len(sys.argv) > 2:
 
 hostname = sys.argv[1]
 
-_info("Check if argument is proper FQDN")
+_info("Check if hostname contains any illegal characters")
 if not is_fqdn(hostname):
     _error("Hostname contains invalid characters.")
     _help()
