@@ -286,7 +286,7 @@ for dirname in all_services:
             unit = 'KB'
         else:
             unit = 'B'
-        _info(BACKUP_FILENAME + " saved: " + ("%.2f" % size) + ' ' + unit)
+        _info(BACKUP_FILENAME + " saved: " + ("%.2f" % size) + ' ' + unit, 'yellow')
 
         # cleanup
         _info("Cleanup - remove " + TMP_FILENAME)
