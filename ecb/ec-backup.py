@@ -268,7 +268,7 @@ for dirname in all_services:
         # transfer backup_locations
         for location in containers_to_backup[container_name]['data_locations']:
             _info("Backing up " + location)
-            stream, stats = docker_client.get_archive(container_name, location + '/*')
+            stream, stats = docker_client.get_archive(container_name, location)
 
             path = location[1:].split('/')
             path_unique = DIRNAME + '/' + '_'.join(path)
