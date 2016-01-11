@@ -288,7 +288,7 @@ for dirname in all_services:
             tar.close()
             os.remove('/tmp/ecb/tmp.tar')
 
-            fromDirectory = '/tmp/ecb/' + location[-1]
+            fromDirectory = '/tmp/ecb/' + path[-1]
             toDirectory = path_unique
             copy_tree(fromDirectory, toDirectory)
 
