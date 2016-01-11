@@ -268,15 +268,19 @@ for dirname in all_services:
         # transfer backup_locations
         for location in containers_to_backup[container_name]['data_locations']:
             _info("Backing up " + location)
-            stream, stats = docker_client.get_archive(container_name, location)
+            stream, stats = docker_client.get_archive(container_name, location + '/*')
 
-            with open(DIRNAME + '/tmp.tar', 'wb') as out:
+            path = location[1:].split('/')
+            path_unique = DIRNAME + '/' + '_'.join(path)
+            os.mkdir(path_unique)
+
+            with open(path_unique + '/tmp.tar', 'wb') as out:
                 out.write(stream.data)
 
-            tar = tarfile.open(DIRNAME + '/tmp.tar')
-            tar.extractall(path=DIRNAME)
+            tar = tarfile.open(path_unique + '/tmp.tar')
+            tar.extractall(path=path_unique)
             tar.close()
-            os.remove(DIRNAME + '/tmp.tar')
+            os.remove(path_unique + '/tmp.tar')
 
 #        # pre-scripts prepared /tmp/backup.tar.gz, now we want to download it from target container to ecb container
 #        stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
