@@ -23,10 +23,15 @@ from termcolor import cprint
 
 LOG_FILE = "/backup/backup.log"
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 USE_COLORS = True
 
-BACKUP_FOLDER = '/services/_backup'
+BACKUP_LABEL =              'io.enonic.backup.enable'
+BACKUP_PRESCRIPT_LABEL =    'io.enonic.backup.prescripts'
+BACKUP_POSTSCRIPT_LABEL =   'io.enonic.backup.postscripts'
+BACKUP_DATA_LABEL =         'io.enonic.backup.data'
+
+BACKUP_TARGET = '/backup'
 
 ADMIN_USER = 'su'
 ADMIN_PWD_FILE = "/services/xp_su_pwd.txt"
@@ -37,14 +42,14 @@ ADMIN_PWD_FILE = "/services/xp_su_pwd.txt"
 #############
 
 
-def is_fqdn(hostname):
-    # ok, not exactly FQDN check - just checking if there are no illegal characters in hostname
-    if len(hostname) > 255:
-        return False
-    if hostname[-1] == ".":
-        hostname = hostname[:-1]  # strip exactly one dot from the right, if present
-    allowed = re.compile('(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
-    return all(allowed.match(x) for x in hostname.split("."))
+#def is_fqdn(hostname):
+#    # ok, not exactly FQDN check - just checking if there are no illegal characters in hostname
+#    if len(hostname) > 255:
+#        return False
+#    if hostname[-1] == ".":
+#        hostname = hostname[:-1]  # strip exactly one dot from the right, if present
+#    allowed = re.compile('(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
+#    return all(allowed.match(x) for x in hostname.split("."))
 
 
 def _error(message):
@@ -100,6 +105,7 @@ def command_execute(container_name, command):
 
 
 start_time = time.time()
+errors = []
 
 # get XP 'su' user password from password file:
 # usually /services/xp_su_pwd.txt (within the container), or /srv/xp_su_pwd.txt on the parent host
@@ -120,19 +126,19 @@ _info("Log file opened")
 log.write("[START] " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
 
 # expecting only one option - hostname, exit if more
-_info("Check for command line arguments")
-if len(sys.argv) > 2:
-    _error("Incorrect number of arguments: " + str(len(sys.argv)) + " - expected 0 or 1")
-    _exit(1)
+# _info("Check for command line arguments")
+# if len(sys.argv) > 2:
+#    _error("Incorrect number of arguments: " + str(len(sys.argv)) + " - expected 0 or 1")
+#    _exit(1)
 
 # get hostname on which backup should be run - will be hostname or localhost
-hostname = sys.argv[1]
+# hostname = sys.argv[1]
 
 # not exactly FQDN check - just check ift here are no illegal characters in hostname
-_info("Check if hostname contains any illegal characters")
-if not is_fqdn(hostname):
-    _error("Hostname contains invalid characters.")
-    _exit(1)
+# _info("Check if hostname contains any illegal characters")
+# if not is_fqdn(hostname):
+#    _error("Hostname contains invalid characters.")
+#    _exit(1)
 
 # since we are running from ECB container, we'll be connecting to docker daemon on parent host through unix socket
 _info("Connecting to host docker demon")
@@ -142,7 +148,8 @@ _debug(docker_client.info())
 
 # let's go
 _info("")
-_info("*** Performing backup on " + hostname + " ***", "green")
+# _info("*** Performing backup on " + hostname + " ***", "green")
+_info("*** Starting backup ***", "green")
 _info("")
 
 # service is a XP installation, and to be exact a directory with
@@ -173,9 +180,9 @@ for dirname in all_services:
     _debug(ecb_config)
 
     # 'ecb' is the name of backup container - skip
-    if 'ecb' in ecb_config.keys():
-        _info(dirname + " seems to be system container directory - skipping")
-        continue
+    # if 'ecb' in ecb_config.keys():
+    #    _info(dirname + " seems to be system container directory - skipping")
+    #    continue
 
     # We're finding container types first, since that is how it is defined in yaml file
     # Container type -> post/pre scripts
@@ -183,22 +190,29 @@ for dirname in all_services:
     _info("Find container types to be backed up")
     container_types_to_backup = {}
     for ctype, cmeta in ecb_config.items():
-        if 'labels' in cmeta.keys() and cmeta['labels']['io.enonic.backup'] == 'yes':
+        if 'labels' in cmeta.keys() and cmeta['labels'][BACKUP_LABEL] == 'yes':
 
             # get prescripts
-            if cmeta['labels']['io.enonic.prescripts'] is not None:
-                pre_scripts = [script.strip() for script in cmeta['labels']['io.enonic.prescripts'].split(",")]
+            if cmeta['labels'][BACKUP_PRESCRIPT_LABEL] is not None:
+                pre_scripts = [script.strip() for script in cmeta['labels'][BACKUP_PRESCRIPT_LABEL].split(",")]
             else:
                 pre_scripts = ''
 
             # get postscripts
-            if cmeta['labels']['io.enonic.postscripts'] is not None:
-                post_scripts = [script.strip() for script in cmeta['labels']['io.enonic.postscripts'].split(",")]
+            if cmeta['labels'][BACKUP_POSTSCRIPT_LABEL] is not None:
+                post_scripts = [script.strip() for script in cmeta['labels'][BACKUP_POSTSCRIPT_LABEL].split(",")]
             else:
                 post_scripts = ''
 
+            # get data locations
+            if cmeta['labels'][BACKUP_DATA_LABEL] is not None:
+                data_locations = [script.strip() for script in cmeta['labels'][BACKUP_DATA_LABEL].split(",")]
+            else:
+                # no data locations - skip
+                continue
+
             # types to backup (in most cases only exp probably)
-            container_types_to_backup[ctype] = {'pre-scripts' : pre_scripts, 'post-scripts' : post_scripts}
+            container_types_to_backup[ctype] = {'pre-scripts': pre_scripts, 'post-scripts': post_scripts, 'data_locations': data_locations}
     _info("Container types to backup: " + ', '.join(container_types_to_backup))
     _debug(container_types_to_backup)
 
@@ -239,61 +253,81 @@ for dirname in all_services:
                 ret = command_execute(container_name, command)
                 _info("command output:\n" + ret['command_output'], 'yellow')
                 _debug("Command exit code: " + str(ret['command_exit_code']))
+                if str(ret['command_exit_code']) != 0:
+                    errors.append('Command [' + command + '] (pre-script) exited with code ' + str(ret['command_exit_code']))
+                    continue
 
         # BACKUP
         _info("")
         _info("Do backup")
 
-        # pre-scripts prepared /tmp/backup.tar.gz, now we want to download it from target container to ecb container
-        stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
-        _debug(stats)
-        _debug(stream)
-        _debug(stream.getheaders())
+        # create backup directory
+        DIRNAME = BACKUP_TARGET + '/' + container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S")
+        os.mkdir(DIRNAME)
 
-        # now, this is slightly weird part:
-        # docker_client.get_archive() is downloading target and taring it, so tmp.tar will have backup.tar.gz inside... 
-        TMP_FILENAME = BACKUP_FOLDER + '/tmp.tar'
+        # transfer backup_locations
+        for location in containers_to_backup[container_name]['data_locations']:
+            _info("Backing up " + location)
+            stream, stats = docker_client.get_archive(container_name, location)
 
-        _info("Saving " + TMP_FILENAME)
+            with open(DIRNAME + '/tmp.tar', 'wb') as out:
+                out.write(stream.data)
 
-        with open(TMP_FILENAME, 'wb') as out:
-            out.write(stream.data)
+            tar = tarfile.open(DIRNAME + '/tmp.tar')
+            tar.extractall(path=DIRNAME)
+            tar.close()
+            os.remove(DIRNAME + '/tmp.tar')
 
-        if not os.path.isfile(TMP_FILENAME):
-            _error("Backup file does not exist: " + TMP_FILENAME)
+#        # pre-scripts prepared /tmp/backup.tar.gz, now we want to download it from target container to ecb container
+#        stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
+#        _debug(stats)
+#        _debug(stream)
+#        _debug(stream.getheaders())
 
-        # since file is copied as a tar stream, we need to extract actual backup.tar.gz file with backup
-        _info("Extracting backup archive from " + TMP_FILENAME)
-        tar = tarfile.open(TMP_FILENAME)
-        # extract all to current dir
-        tar.extractall(path=BACKUP_FOLDER)
-        tar.close()
+#        # now, this is slightly weird part:
+#        # docker_client.get_archive() is downloading target and taring it, so tmp.tar will have backup.tar.gz inside...
+#        TMP_FILENAME = BACKUP_TARGET + '/tmp.tar'
 
-        # rename backup.tar.gz to BACKUP_FILENAME
-        TAR_FILENAME = container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
-        BACKUP_FILENAME = BACKUP_FOLDER + '/' + TAR_FILENAME
-        _info("Rename " + TMP_FILENAME + " to " + BACKUP_FILENAME)
-        os.rename(BACKUP_FOLDER + '/backup.tar.gz', BACKUP_FILENAME)
+#        _info("Saving " + TMP_FILENAME)
 
-        size = os.path.getsize(BACKUP_FILENAME)
-        if size >= 1048576:
-            size = float(size) / 1048576
-            unit = 'MB'
-        elif size >= 1024:
-            size = float(size) / 1024
-            unit = 'KB'
-        else:
-            unit = 'B'
-        _info(BACKUP_FILENAME + " saved: " + ("%.2f" % size) + ' ' + unit, 'yellow')
+#        with open(TMP_FILENAME, 'wb') as out:
+#            out.write(stream.data)
 
-        # cleanup
-        _info("Cleanup - remove " + TMP_FILENAME)
-        os.remove(TMP_FILENAME)
+#        if not os.path.isfile(TMP_FILENAME):
+#            _error("Backup file does not exist: " + TMP_FILENAME)
 
-        # this is to notify ec-backup.sh which file is the newest (for info and download purposes)
-        _info("Write current file")
-        with open(BACKUP_FOLDER + "/current", "w") as text_file:
-            text_file.write('/srv/_backup/' + TAR_FILENAME + "\n")
+#        # since file is copied as a tar stream, we need to extract actual backup.tar.gz file with backup
+#        _info("Extracting backup archive from " + TMP_FILENAME)
+#        tar = tarfile.open(TMP_FILENAME)
+#        # extract all to current dir
+#        tar.extractall(path=BACKUP_TARGET)
+#        tar.close()
+
+#        # rename backup.tar.gz to BACKUP_FILENAME
+#        TAR_FILENAME = container_name + '_' + time.strftime("%Y-%m-%d_%H.%M.%S") + '.tar.gz'
+#        BACKUP_FILENAME = BACKUP_TARGET + '/' + TAR_FILENAME
+#        _info("Rename " + TMP_FILENAME + " to " + BACKUP_FILENAME)
+#        os.rename(BACKUP_TARGET + '/backup.tar.gz', BACKUP_FILENAME)
+
+#        size = os.path.getsize(BACKUP_FILENAME)
+#        if size >= 1048576:
+#            size = float(size) / 1048576
+#            unit = 'MB'
+#        elif size >= 1024:
+#            size = float(size) / 1024
+#            unit = 'KB'
+#        else:
+#            unit = 'B'
+#        _info(BACKUP_FILENAME + " saved: " + ("%.2f" % size) + ' ' + unit, 'yellow')
+
+#        # cleanup
+#        _info("Cleanup - remove " + TMP_FILENAME)
+#        os.remove(TMP_FILENAME)
+
+#        # this is to notify ec-backup.sh which file is the newest (for info and download purposes)
+#        _info("Write current file")
+#        with open(BACKUP_TARGET + "/current", "w") as text_file:
+#            text_file.write('/srv/_backup/' + TAR_FILENAME + "\n")
 
         # POST-SCRIPTS
         _info("")
@@ -310,6 +344,15 @@ for dirname in all_services:
                 ret = command_execute(container_name, command)
                 _info(ret['command_output'], 'magenta')
                 _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
+                if str(ret['command_exit_code']) != 0:
+                    errors.append('Command [' + command + '] (post-script) exited with code ' + str(ret['command_exit_code']))
+                    continue
+
+# check for errors
+if len(errors) > 0:
+    _info("there were some errors:")
+    for line in errors:
+        _info(line)
 
 end_time = time.time()
 _info("")
