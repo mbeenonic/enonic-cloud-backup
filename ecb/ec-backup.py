@@ -217,6 +217,10 @@ for dirname in all_services:
     _info("Container types to backup: " + ', '.join(container_types_to_backup))
     _debug(container_types_to_backup)
 
+    if len(container_types_to_backup) == 0:
+        _info("No container types to backup")
+        continue
+
     # now, get the actual names of the containers of each type
     _info("Get names of the containers to be backed up")
     containers_to_backup = {}
