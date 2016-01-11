@@ -277,7 +277,8 @@ for dirname in all_services:
 
             if os.path.isdir('/tmp/ecb'):
                 shutil.rmtree('/tmp/ecb')
-                os.mkdir('/tmp/ecb')
+
+            os.mkdir('/tmp/ecb')
 
             with open('/tmp/ecb/tmp.tar', 'wb') as out:
                 out.write(stream.data)
