@@ -14,8 +14,6 @@ import docker
 import time
 import tarfile
 from termcolor import cprint
-# import git    # for git
-# import shutil # for git
 
 
 ##########
