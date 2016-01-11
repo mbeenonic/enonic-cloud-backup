@@ -24,8 +24,8 @@ from distutils.dir_util import copy_tree
 
 LOG_FILE = "/backup/backup.log"
 
-DEBUG_MODE = True
-USE_COLORS = True
+DEBUG_MODE = False
+USE_COLORS = False
 
 BACKUP_LABEL =              'io.enonic.backup.enable'
 BACKUP_PRESCRIPT_LABEL =    'io.enonic.backup.prescripts'
