@@ -253,7 +253,7 @@ for dirname in all_services:
                 ret = command_execute(container_name, command)
                 _info("command output:\n" + ret['command_output'], 'yellow')
                 _debug("Command exit code: " + str(ret['command_exit_code']))
-                if str(ret['command_exit_code']) != 0:
+                if ret['command_exit_code'] != 0:
                     errors.append('Command [' + command + '] (pre-script) exited with code ' + str(ret['command_exit_code']))
                     continue
 
@@ -348,7 +348,7 @@ for dirname in all_services:
                 ret = command_execute(container_name, command)
                 _info(ret['command_output'], 'magenta')
                 _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
-                if str(ret['command_exit_code']) != 0:
+                if ret['command_exit_code'] != 0:
                     errors.append('Command [' + command + '] (post-script) exited with code ' + str(ret['command_exit_code']))
                     continue
 
