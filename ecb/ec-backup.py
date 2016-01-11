@@ -14,7 +14,8 @@ import docker
 import time
 import tarfile
 from termcolor import cprint
-
+import shutil
+from distutils.dir_util import copy_tree
 
 ##########
 # CONFIG #
@@ -253,8 +254,8 @@ for dirname in all_services:
                 ret = command_execute(container_name, command)
                 _info("command output:\n" + ret['command_output'], 'yellow')
                 _debug("Command exit code: " + str(ret['command_exit_code']))
-                if ret['command_exit_code'] != 0:
-                    errors.append('Command [' + command + '] (pre-script) exited with code ' + str(ret['command_exit_code']))
+                if int(ret['command_exit_code']) != 0:
+                    errors.append('Command \'' + command + '\' (pre-script) exited with code ' + str(ret['command_exit_code']))
                     continue
 
         # BACKUP
@@ -274,13 +275,21 @@ for dirname in all_services:
             path_unique = DIRNAME + '/' + '_'.join(path)
             os.mkdir(path_unique)
 
-            with open(path_unique + '/tmp.tar', 'wb') as out:
+            if os.path.isdir('/tmp/ecb'):
+                shutil.rmtree('/tmp/ecb')
+                os.mkdir('/tmp/ecb')
+
+            with open('/tmp/ecb/tmp.tar', 'wb') as out:
                 out.write(stream.data)
 
-            tar = tarfile.open(path_unique + '/tmp.tar')
-            tar.extractall(path=path_unique)
+            tar = tarfile.open('/tmp/ecb/tmp.tar')
+            tar.extractall(path='/tmp/ecb')
             tar.close()
-            os.remove(path_unique + '/tmp.tar')
+            os.remove('/tmp/ecb/tmp.tar')
+
+            fromDirectory = '/tmp/ecb/' + location[-1]
+            toDirectory = path_unique
+            copy_tree(fromDirectory, toDirectory)
 
 #        # pre-scripts prepared /tmp/backup.tar.gz, now we want to download it from target container to ecb container
 #        stream, stats = docker_client.get_archive(container_name, '/tmp/backup.tar.gz')
@@ -348,8 +357,8 @@ for dirname in all_services:
                 ret = command_execute(container_name, command)
                 _info(ret['command_output'], 'magenta')
                 _info("Command exit code: " + str(ret['command_exit_code']), 'yellow')
-                if ret['command_exit_code'] != 0:
-                    errors.append('Command [' + command + '] (post-script) exited with code ' + str(ret['command_exit_code']))
+                if int(ret['command_exit_code']) != 0:
+                    errors.append('Command \'' + command + '\' (post-script) exited with code ' + str(ret['command_exit_code']))
                     continue
 
 # check for errors
